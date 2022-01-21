@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+<body>
+
+<h2>HTML Table</h2>
+
+<table id="usersList">
+
+</table>
+<!-- логика для создания пользователя **/ -->
+<form action="#">
+    <input id="user_name" placeholder="User name">
+    <input id="user_login" placeholder="User login">
+    <input id="user_email" placeholder="User email">
+    <button onclick="createUser()">Create user</button>
+</form>
+
+<input id="search_field">
+<button onclick="searchByLogin()">Search by Login</button>
+<script>
+    function searchByLogin() {
+        const login = document.getElementById("search_field").value;
+        const xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 /*реквест завершен и респонз готов */ && this.status == 200 /* положительный ответ от сервера*/) {
+                const user = JSON.parse(this.responseText);
+                let html = '<tr>\n' +
+                    '        <th>User id</th>\n' +
+                    '        <th>User name</th>\n' +
+                    '        <th>User login</th>\n' +
+                    '        <th>User email</th>\n' +
+                    '        <th>Delete</th>\n' +
+                    '    </tr>';
+                html = html + '<tr><td>' + user.id + '</td>\n' +
+                    '        <td>' + user.name + '</td>\n' +
+                    '        <td>' + user.login + '</td>\n' +
+                    '        <td>' + user.email + '</td>' +
+                    '        <td><button onclick="deleteUser(' + user.id + ')">Delete</button></td></tr>';
+                document.getElementById("usersList").innerHTML = html;
+            }
+        };
+        xhttp.open("GET", "http://localhost:8080/users/findByLogin?login=" + login, true);
+        xhttp.send();
+    }
+
+    function deleteUser(userId) {
+        const xhttp = new XMLHttpRequest();
+        xhttp.open("DELETE", "http://localhost:8080/users/delete/" + userId, true); //синтаксис запроса
+        xhttp.send();
+    }
+
+    function createUser() {
+        const userName = document.getElementById("user_name").value;
+        const userLogin = document.getElementById("user_login").value;
+        const userEmail = document.getElementById("user_email").value;
+
+        const xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/users/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+        xmlhttp.send(JSON.stringify({name: userName, login: userLogin, email: userEmail}));
+
+        loadUsers();
+    }
+
+    function loadUsers() {
+        const xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange /** обработчик реагирует на состояние запроса **/  = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                const users = JSON.parse(this.responseText);
+                let html = '<tr>\n' +
+                    '        <th>User id</th>\n' +
+                    '        <th>User name</th>\n' +
+                    '        <th>User login</th>\n' +
+                    '        <th>User email</th>\n' +
+                    '        <th>Delete</th>\n' +
+                    '    </tr>';
+                for (let i = 0; i < users.length; i++) {
+                    const user = users[i];
+                    console.log(user);
+                    html = html + '<tr><td>' + user.id + '</td>\n' +
+                        '        <td>' + user.name + '</td>\n' +
+                        '        <td>' + user.login + '</td>\n' +
+                        '        <td>' + user.email + '</td>' +
+                        '        <td><button onclick="deleteUser(' + user.id + ')">Delete</button></td></tr>';
+
+                }
+                document.getElementById("usersList").innerHTML = html;
+            }
+        };
+        xhttp.open("GET", "http://localhost:8080/users/findAll", true);
+        xhttp.send();
+    }
+
+    loadUsers();
+</script>
+</body>
+</html>
